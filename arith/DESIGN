@@ -1,0 +1,463 @@
+DESIGN DOC
+HW #4
+BY: Alex Cohen and Cihan Sebzeci
+-----------------------------------------------------------------------------
+Table of Contents
+
+Section:                                        Line Number:
+Overall architecture            ----------         26-64 
+Components                      ----------         66
+        Part A                  ----------         67   
+           - 40image.c          ----------         68-76        
+           - compress.c         ----------         78-95
+           - decompress.c       ----------         97-113
+           - intFloatConvert.c  ----------         115-129
+           - rgbYConvert.c      ----------         131-145
+           - pack.c             ----------         147-173
+           - unpack.c           ----------         175-195
+           - wordWork.c         ----------         197-212
+           - YABCDConvert.c     ----------         214-231
+        Part B                  ----------         233
+           - bitpack.c          ----------         234-270
+Testing plan                    ----------         272-432
+Questions                       ----------         435-464
+
+-----------------------------------------------------------------------------
+Overall architecture:
+
+- 40image.c is the interface that interacts with a user.  It calls on 
+        compress.c or decompress.c based on what the user wants to do
+
+        - compress.c is the interface that compresses an image
+                - To compress an image:
+                        - uses intFloatConvert.c to change to floating point
+                                 representation
+                        - uses rgbYConvert.c to transform each pixel from 
+                                RGB color space to component video color 
+                                space (YPbPr)
+                        - uses pack.c to pack together code words from each 
+                                2x2 block of pixels
+
+        - decompress.c is the interface that decompresses an image
+                - To decompress an image:
+                        - uses unpack.c to unpack each code word that is 
+                                read in
+                        - uses rgbYConvert.c to transform each pixel from
+                                component video color space (YPbPr) to RGB 
+                                color space
+                        - uses intFloatConvert.c to change to integer 
+                                representation
+
+        - pack.c is the interface that packs together a code word
+                - To do so:
+                        - uses YABCDConvert.c to transform Y (luminance) 
+                                values of pixels into cosine coefficients 
+                                a, b, c, d
+                        - uses bitpack.c to pack together a code word
+
+        - unpack.c is the interface that unpacks a given code word
+                - To do so:
+                        - uses bitpack.c to take apart a code word
+                        - uses YABCDConvert.c to transform cosine 
+                                coefficients a, b, c, d, in to Y 
+                                (luminance) values of pixels
+
+Components:
+        Part A:
+                - 40image.c
+                        Purpose: To compress or decompress an image based 
+                                on user input
+                        Component architecture:
+                                - defined types: N/A
+                                - functions: 
+                                        - main (calls "compress" or 
+                                                "decompress" according to
+                                                 user input)
+
+                - compress.c
+                        Purpose: To compress a given image
+                        Component architecture:
+                                - defined types: 
+                                        - UArray2b (2D array of pixels)
+                                        - A2Methods_T (struct holding 
+                                                available functions for 2D 
+                                                arrays)
+                                        - Pnm_ppm (struct holding pixels)
+                                        - newClosure (struct to give to the 
+                                                mapping function that holds 
+                                                additional information)
+                                - functions: 
+                                        - compress (function to compress an 
+                                                image, calls other 
+                                                components to do so)
+                                        - print_codewords (function to print
+                                               out each compressed code word)
+
+                - decompress.c
+                        Purpose: To decompress a given image
+                        Component architecture:
+                                - defined types: 
+                                        - UArray2b (2D array of pixels)
+                                        - A2Methods_T (struct holding 
+                                                available functions for 2D 
+                                                arrays)
+                                        - newClosure (struct to give the 
+                                                mapping function that holds 
+                                                additional information)
+                                - functions: 
+                                        - decompress (function to decompress
+                                                an image, calls other 
+                                                components to do so)
+                                        - print (function to print out each 
+                                                compressed code word)
+
+                - intFloatConvert.c
+                        Purpose: To convert between integer and floating 
+                                        point values
+                        Component architecture:
+                                - defined types: 
+                                        - Pnm_ppm (struct holding 2D array 
+                                                of pixels)
+                                        - Pnm_rgb (struct holding a pixel)
+                                - functions:
+                                        - int2float (function to convert 
+                                                each pixel RGB values from 
+                                                ints to floats)
+                                        - float2int (function to convert 
+                                                each pixel RGB value from 
+                                                float to int)
+        
+                - rgbYConvert.c
+                        Purpose: To convert between RGB and component video 
+                                        color space
+                        Component architecture:
+                                - defined types: 
+                                        - Pnm_rgb (struct holding a pixel)
+                                        - Pnm_ypbpr (struct holding pixel in
+                                                component video color space)
+                                - functions: 
+                                        - rgb2Y (function to convert each 
+                                                pixel from RGB to component 
+                                                video color space)
+                                        - Y2rgb (function to convert each 
+                                                pixel from component color 
+                                                space to RGB)
+                
+                - pack.c
+                        Purpose: To pack together a code word
+                        Component architecture:
+                                - defined types: 
+                                        - UArray2b (2x2 block of pixels)
+                                        - A2Methods (method suite holding 
+                                                the functions we can use on 
+                                                UArray2bs)
+                                        - Pnm_rgb (struct holding a pixel)
+                                        - Pnm_ypbpr (struct holding pixel in
+                                                component video color space)
+                                        - DCT (struct holding Y luminance 
+                                                values and corresponding 
+                                                cosine coefficients)
+                                        - newClosure (struct to give the 
+                                                mapping function that holds 
+                                                additional information)
+                                - functions: 
+                                        - pack (function to pack together 
+                                                a word, calls other
+                                                components to do so)
+                                        - takeAverage (function to take the 
+                                                average of the four chroma 
+                                                values supplied)
+                                        - unsigned2sign (function to convert
+                                                unsigned numbers to signed 
+                                                numbers)
+
+                - unpack.c
+                        Purpose: To unpack a code word
+                        Component architecture:
+                                - defined types: 
+                                        - UArray2b (2x2 block of pixels)
+                                        - A2Methods (method suite holding 
+                                                the functions we can use on 
+                                                UArray2bs)
+                                        - Pnm_rgb (struct holding a pixel)
+                                        - Pnm_ypbpr (struct holding pixel in
+                                                component video color space)
+                                        - DCT (struct holding Y luminance 
+                                                values and corresponding 
+                                                cosine coefficients)
+                                        - newClosure (struct to give the 
+                                                mapping function that holds 
+                                                additional information)
+                                - functions: 
+                                        - unpack (function to unpack a word,
+                                                calls other components to do
+                                                so)
+
+                - wordpack.c
+                        Purpose: To pack together a code word or take one 
+                                apart
+                        Component architecture:
+                                - defined types: 
+                                        - Pnm_ypbpr (struct holding pixel in
+                                                component video color space)
+                                        - DCT (struct holding Y luminance 
+                                                values and corresponding 
+                                                cosine coefficients)
+                                - functions: 
+                                        - makeWord (use bitpack interface to
+                                                pack together a code word)
+                                        - takeApartWord (use bitpack 
+                                                interface to take apart a 
+                                                code word)
+
+                - YABCDConvert.c
+                        Purpose: To convert between Y (luminance/luma) values
+                                and cosine coefficients a, b, c, and d
+                        Component architecture:
+                                - defined types: 
+                                        - Pnm_ypbpr (struct holding pixel in
+                                                component video color space 
+                                                format)
+                                        - DCT (struct holding Y luminance 
+                                                values and corresponding 
+                                                cosine coefficients)
+                                - functions: 
+                                        - transformY (transforms from Y 
+                                                luminance values to cosine 
+                                                coefficients)
+                                        - transformABCD (transforms from 
+                                                cosine coefficients to Y 
+                                                luminance values)
+
+        Part B:
+                - bitpack.c
+                        Purpose: To pack, unpack, and manipulate sets of bits
+                        Component architecture:
+                                - defined types: N/A
+                                - functions: 
+                                        - right_shiftu (shifts an unsigned 
+                                                bit a certain number of bits
+                                                to the right)
+                                        - left_shiftu (shifts an unsigned 
+                                                bit a certain number of bits
+                                                to the left)
+                                        - right_shifts (shifts a signed bit 
+                                                a certain number of bits to 
+                                                the right)
+                                        - left_shifts (shifts a signed bit a
+                                                certain number of bits to 
+                                                the left)
+                                        - create_mask (creates a mask to be 
+                                                used by other functions)
+                                        - Bitpack_fitsu (checks to see if an
+                                                unsigned argument can be
+                                                represented in a certain 
+                                                number of bits)
+                                        - Bitpack_fitss (checks to see if a 
+                                                signed argument can be 
+                                                represented in a certain 
+                                                number of bits)
+                                        - Bitpack_getu (extracts values from 
+                                                an unsigned argument)
+                                        - Bitpack_gets (extracts values from 
+                                                a signed argument)
+                                        - Bitpack_newu (creates a new 
+                                                unsigned word edited from a 
+                                                given word)
+                                        - Bitpack_news (creates a new signed 
+                                                word edited from a given 
+                                                word)
+
+Testing plan (for each component):
+
+        - Start by testing the smallest modules (this means the modules 
+        that are called by other modules, but don't call other modules 
+        themselves).  Tests on these smallest modules start with tests 
+        within the modules themselves, and then from the modules that 
+        should call them.  These modules are as follows:
+
+                bitpack.c
+                        - tests within bitpack.c
+                                - fit functions with width 0 return false
+                                - fits(1, -2) should return true
+                                - fits(1, 2) should return false
+                                - fits(1, 0) should return true
+                                - fitu(2,3) should return true
+                                -get functions with width 0 should return 0
+                                -test get  functions with sample inputs.  
+                                - new functions should follow rules
+                        - tests calling bitpack.c functions from other module
+
+                intFloatConvert.c
+                        - tests within intFloatConvert.c
+                                - check arguments for validity
+                                - test empty pixel array
+                                - test converting a single int to float 
+                                        (pixel array of one pixel)
+                                - test converting zero (should also return 
+                                        zero)
+                                - test converting any int to float
+                                        - test for within correct range
+                                - test converting a single float to int
+                                        - testing converting a float to an 
+                                        int when the float is bigger than 
+                                        the int range
+                                - test converting float to int 
+                                - test converting several ints to float 
+                                        (pixel array of several pixels)
+                        - tests within compress.c
+                        - tests within decompress.c
+
+                rgbYConvert.c
+                        - tests within rgbYConvert.c
+                                - check arguments for validity
+                                - test converting rgb to Y
+                                        - test pixel array is NULL
+                                        - test with empty pixel array
+                                        - test with single pixel
+                                        - test with single pixel where one 
+                                                or more value is zero
+                                        - handle appropriately a zero 
+                                                Pnm_ppm denominator
+                                        - test with several pixels
+                                - test converting Y to rgb
+                                        - (see the tests for rgb to Y)
+                                        - test with rgb values out of 0-255 
+                                                range to make sure that 
+                                                they’re handled correctly
+                        - tests within compress.c
+                        - tests within decompress.c
+
+                wordWork.c
+                        - tests within wordWork.c
+                                - check arguments for validity
+                                - (ensure that we never use specific numbers
+                                        and only constants)
+                                - test making a word
+                                        - this function uses already tested 
+                                                bitpack.c functions
+                                        - this function takes in parameters 
+                                                from functions tested in 
+                                                prior sections
+                                        - ensure that we handle properly 
+                                                parameters not of their 
+                                                specified types (unsigned 
+                                                vs. signed)
+                                - test taking apart a word
+                                        - this function uses already tested 
+                                                bitpack.c functions
+                        - tests within pack.c
+                        - tests within unpack.c
+
+                YABCDConvert.c
+                        - tests within YABCDConvert.c
+                                - test invalid arguments
+                                - test with all zeros
+                                - test that quantized variables are in the 
+                                        correct range
+                                - test with positive and negative inputs and
+                                        ensure that the output is as expected
+                        - tests within pack.c
+                        - tests within unpack.c
+
+        - Now we move on to testing the next smallest modules (the modules 
+        that call other modules but are also called themselves).  Tests on 
+        these modules start with tests within the modules themselves, and 
+        then from the modules that should call them.  These modules are as 
+        follows:
+        
+                pack.c
+                        - tests within pack.c
+                                - check arguments for validity
+                                - this module uses functions already tested 
+                                        in YABCDConvert.c and wordWork.c
+                                - test taking the average of zeros, positive,
+                                         and negative numbers
+                                - test to make sure the inputs will be 
+                                        within the correct range before 
+                                        passing them to a quantizing function
+                                - check for inputs within correct respective 
+                                        ranges
+                        - tests within compress.c
+
+                unpack.c
+                        - tests within unpack.c
+                                - check arguments for validity
+                                - this module uses functions already tested 
+                                        in YABCDConvert.c and wordWork.c
+                                - test to make sure the outputs are in the 
+                                        right range
+                        - tests within decompress.c
+
+        - Lastly we'll test the second largest modules.  These call the 
+        modules above, but are ultimately called by the big overarching 
+        module.  Tests on these modules start with tests within the modules 
+        themselves, and then from the module that calls them.  These modules 
+        are as follows:
+
+                compress.c
+                        - tests within compress.c
+                                - check for validity of file pointer
+                                - test with empty file
+                                - test success of A2Methods and Pnm_ppm 
+                                object creation
+                                - test for valid width and height before
+                                        printing
+                                - test to make sure print happens in 
+                                        row-major order
+                - tests within 40image.c
+
+                decompress.c
+                        - tests within decompress.c
+                                - check for validity of file pointer
+                                - test with empty file
+                                - test success of A2Methods and Pnm_ppm 
+                                        object creation
+                                - test for valid width and height before 
+                                        printing
+                                - test to make sure print happens in 
+                                        row-major order
+                        - tests within 40image.c
+
+        - The final step will be to test the biggest module, 40image.c itself
+                - Tests within 40image.c
+                        - test to make sure it’s reading in appropriately
+                        - test to make sure it handles certain errors 
+                                appropriately
+                        - test different types of files (one file, no file, 
+                                too many files, empty file, etc.)
+                        - test to make sure it calls the appropriate module 
+                                (compress or decompress) according to user 
+                                input
+
+                
+Questions: 
+
+1) How will your design enable you to do well on the challenge problem
+in Section 2.3 on page 13?
+        - The challenge problem entails a change in the formatting of a 
+        code word.  The only module that we have that handles the making
+        and unmaking of a code word is the module "wordpack.c"  If we do
+        our work correctly, that should be the only module that needs 
+        adjusting.  Thus through modularity we should have minimal work
+        to do to solve the challenge problem.
+
+2) An image is compressed and then decompressed.  Identify all the 
+places where information could be lost.  Then it's compressed and 
+decompressed again.  Could more information be lost? How?
+        - Places where information is lost during initial compression and 
+        decompression:
+                - trimming the last row and/or the last column
+                - converting from a float to an int (becomes less precise)
+                - taking the average of four pixels (the mean is less exact 
+                        than each of the individual values)
+                - converting cosine coefficients b, c, and d to five-bit 
+                        signed values that fall in a very specific range 
+                        (lose information for coefficients that lie outside 
+                        of said range)
+                - quantizing any values to be within a range (like the RGB 
+                        values to be from 0-255)
+
+        - Yes more information can be lost, in the same places where 
+                information was lost the first time around.  Every time it's 
+                compressed and decompressed more information is lost. 

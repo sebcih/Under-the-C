@@ -1,0 +1,69 @@
+/***************************UMTESTS****************************************/
+add_test_max: In - null, out - 0
+        Description: Loads 0 into a register, nands it with itself.
+                     The value stored in register is now 0xffffffff.
+                     1 is now added to set the value to 0.
+                     48 is added to this, and the register value is
+                     outputted. If the output is 0, this demonstrates
+                     the add is working correctly 
+                     (max_num + 48 % max_num = 48)
+
+nand_test: in - null, out - 0./
+        Description: nands 0 with 0 and then adds 49, this is now 48
+                     this value is displayed, (it should be 0). Then, 
+                     0x1 is nanded with itself, and 48 is added. This should
+                     be '.'. Finally 1 is nanded with 0 and 48 is added, 
+                     this should be '/'. This verifies nand is working 
+                     correctly
+
+input_test: in 0-255 ASCII, out 0-255 ASCII
+        Description: reads in the bytes 0 - 255, and then outputs
+                     the values read in. The output should match
+                     the input, and be every one of the ASCII values. 
+                     This verifies that input is working correctly
+
+output_test: in - null, out - ABCD..XYZ
+	Description: uses output to print the ascii values from
+                     65 - 90 (ABCD...XYZ). This also shows output working
+                     correctly
+
+div_test: in - null, out - 0
+	Description: divides 96 / 2 and outputs result(48). The character
+                     0 should be displayed to verify it works correctly
+
+mult_test: in - null, out - 00
+	Description: multiplies 2 * 24, outputs result
+                     then multiplies 1024 * 1024 * 4, and adds 48
+                     the value should be 48, this is outputted
+
+
+memory_test: in - null, out - !
+	Description: uses map, loadval, seg_store, and seg_load to
+                     output '!'. NOTE: the memory was tested throughouly
+                     in our previously provided memory_test.c
+
+load_progrem_test_load: in - null, out null
+	Description: loads another program that is just the halt instruction
+                     and executes that instruction. It should halt
+
+loud_program_test_jump: in - null, out 0
+	Description: uses load program to skip a halt instruction
+                     then outputs 0
+
+emit_condition_move_test: in - null, out : 00
+	Description: outputs 0, and then uses the conditional move to
+                     not load a value and then output 0 again
+
+emit_condition_move_test_two: in - null, out : 02
+	Description: outputs 0, and then uses conditional move to
+                     load a value and then it outputs 50 ('2')
+
+loadval_test: in - null, out: 6
+	Description: uses loadval to load 6 into a register, add 48 and 
+                     then output it
+add.um: in - null, out null
+	Description: tests an add then halts
+
+emit_verbose_halt_test: none
+	Description: 
+emit_halt_test: none

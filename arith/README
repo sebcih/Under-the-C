@@ -1,0 +1,105 @@
+HW #4 README
+By: Cihan Sebzeci and Alex Cohen
+------------------------------------------------------------------------
+Table of Contents
+
+Section:                                        Line Number:        
+Individual Components           ----------           23
+        Part A                  ----------           24      
+           - 40image.c          ----------           25      
+           - compress.c         ----------           29
+           - decompress.c       ----------           32
+           - pack.c             ----------           35
+           - unpack.c           ----------           38
+           - intFloatConvert.c  ----------           41
+           - rgbYConvert.c      ----------           45
+           - wordPack.c         ----------           49
+           - YABCDConvert.c     ----------           53
+        Part B                  ----------           57
+           - bitpack.c          ----------           58
+Overall architecture            ----------           61
+Number of hours spent           ----------           103
+------------------------------------------------------------------------
+Individual Components:
+        Part A:
+                - 40image.c
+                        Purpose: To compress or decompress an image based 
+                                on user input
+
+                - compress40.c
+                        Purpose: To compress a given image
+
+                - decompress40.c
+                        Purpose: To decompress a given image
+                        
+ 		- pack.c
+                        Purpose: To pack together a code word
+
+ 		- unpack.c
+                        Purpose: To unpack a code word
+
+                - intFloatConvert.c
+                        Purpose: To convert between integer and floating 
+                                        point values
+
+                - rgbYConvert.c
+                        Purpose: To convert between RGB and component video 
+                                        color space
+
+                - wordPack.c
+                        Purpose: To pack together a code word or take one 
+                                apart
+                       
+                - YABCDConvert.c
+                        Purpose: To convert between Y (luminance/luma) values
+                                and cosine coefficients a, b, c, and d
+
+        Part B:
+                - bitpack.c
+                        Purpose: To pack, unpack, and manipulate sets of bits
+
+Overall architecture:
+
+- 40image.c is the interface that interacts with a user.  It calls on 
+        compress40.c or decompress40.c based on what the user wants to do
+
+        - compress40.c is the interface that compresses an image
+                - To compress an image:
+                        - uses intFloatConvert.c to change to floating point
+                                 representation
+                        - uses rgbYConvert.c to transform each pixel from 
+                                RGB color space to component video color 
+                                space (YPbPr)
+                        - uses pack.c to pack together code words from each 
+                                2x2 block of pixels
+
+        - decompress40.c is the interface that decompresses an image
+                - To decompress an image:
+                        - uses unpack.c to unpack each code word that is 
+                                read in
+                        - uses rgbYConvert.c to transform each pixel from
+                                component video color space (YPbPr) to RGB 
+                                color space
+                        - uses intFloatConvert.c to change to integer 
+                                representation
+
+        - pack.c is the interface that packs together a code word
+                - To do so:
+                        - uses YABCDConvert.c to transform Y (luminance) 
+                                values of pixels into cosine coefficients 
+                                a, b, c, d
+			- uses wordPack.c to pack together a code word
+				(which in turn uses bitpack.c)
+
+        - unpack.c is the interface that unpacks a given code word
+                - To do so:
+			- uses wordPack.c to take apart a code word
+				(which in turn uses bitpack.c)
+                        - uses YABCDConvert.c to transform cosine 
+                                coefficients a, b, c, d, in to Y 
+                                (luminance) values of pixels
+                      
+------------------------------------------------------------------------
+Number of hours spent on analyzing the problems: ~15 
+
+Number of hours spent solving the problems: ~30

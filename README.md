@@ -1,5 +1,4 @@
 # Cihan Sebzeci
-# Comp 40 Spring 2016
 ____________
 
 ## About
